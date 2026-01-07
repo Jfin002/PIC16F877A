@@ -1,37 +1,117 @@
-# PIC16F877A ADC LED Dimmer (ADC + PWM)
+PIC16F877A ADC LED Dimmer (ADC + PWM)
 
-## Project Description
+Project Description
 This project demonstrates how to use the ADC and PWM modules of the PIC16F877A microcontroller to control LED brightness.  
 A potentiometer connected to Analog Channel AN0 is used to vary the input voltage. The ADC converts this voltage into a 10-bit digital value, which is then mapped directly to the PWM duty cycle to control LED brightness.
 
-## Objectives
+Objectives
 - Configure the ADC module of PIC16F877A
 - Read analog voltage using AN0
 - Configure PWM using CCP1 module
 - Control LED brightness using PWM based on ADC input
 
-## Hardware Components
+Hardware Components
 - PIC16F877A
 - Potentiometer (POT-HG)
 - LED
 - Oscilloscope
 - VCC and Ground
 
-## Software Tools
+Software Tools
 - MPLAB X IDE
 - XC8 Compiler
 - Proteus (for simulation)
 
-## Working Principle
+Working Principle
 1. The ADC reads the analog voltage from the potentiometer connected to AN0.
 2. The ADC produces a 10-bit digital value (0–1023).
 3. This value is passed directly to the PWM module.
 4. PWM duty cycle changes according to the ADC value.
 5. LED brightness increases or decreases based on the duty cycle.
 
-## Output
+Output
 - Smooth LED brightness control using analog input
 - Real-time response to potentiometer changes
 
-## Author
-Jeffin Paul
+
+#pragma config FOSC = HS        // Oscillator Selection bits (HS oscillator)
+#pragma config WDTE = ON        // Watchdog Timer Enable bit (WDT enabled)
+#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
+#pragma config BOREN = ON       // Brown-out Reset Enable bit (BOR enabled)
+#pragma config LVP = ON         // Low-Voltage (Single-Supply) In-Circuit Serial Programming Enable bit (RB3/PGM pin has PGM function; low-voltage programming enabled)
+#pragma config CPD = OFF        // Data EEPROM Memory Code Protection bit (Data EEPROM code protection off)
+#pragma config WRT = OFF        // Flash Program Memory Write Enable bits (Write protection off; all program memory may be written to by EECON control)
+#pragma config CP = OFF         // Flash Program Memory Code Protection bit (Code protection off)
+
+// #pragma config statements should precede project file includes.
+// Use project enums instead of #define for ON and OFF.
+
+#include <xc.h>
+#include <stdint.h>
+#define _XTAL_FREQ 4000000
+
+//-----[ Prototypes ]----
+void PWM1_Init();
+void PWM1_Set_Duty(uint16_t);
+void ADC_Init();
+uint16_t ADC_Read(uint8_t);
+//====================================================
+//----------[Main Routine]-------------
+void main(void) 
+{
+    PWM1_Init();
+    ADC_Init();
+    while(1)
+    {
+        PWM1_Set_Duty(ADC_Read(0)); // Set PWM Duty Cycle To AN0_Result!
+        __delay_ms(1);
+    }
+    return;
+}
+//----------[END OF MAIN]-------------
+//====================================================
+//------------[ CCP/PWM Routines ]--------------
+void PWM1_Init()
+{
+  //--[ Configure The CCP Module For PWM Mode ]--
+  CCP1M3 = 1;
+  CCP1M2 = 1;
+  TRISC2 = 0; // The CCP1 Output Pin (PWM)
+  // Set The PWM Frequency (5kHz)
+  PR2 = 124;
+  // Set The PS For Timer2 (1:4 Ratio)
+  T2CKPS0 = 0;
+  T2CKPS1 = 0;
+  // Start CCP1 PWM !
+  TMR2ON = 1;
+}
+void PWM1_Set_Duty(uint16_t DC)
+{
+  // Check The DC Value To Make Sure it's Within 10-Bit Range
+  if(DC<1024)
+  {
+    CCP1Y = DC & 1;
+    CCP1X = DC & 2;
+    CCPR1L = DC >> 2;
+  }
+}
+//------------[ AD Converter Routines ]--------------
+void ADC_Init()
+{
+    ADCON0 = 0x81;  // Turn ADC ON, Select AN0 Channel, ADC Clock = Fosc/8
+    ADCON1 = 0x80;  // All 8 Channels Are Analog, Result is "Right-Justified"
+                    // ADC Clock = Fosc/8
+}
+uint16_t ADC_Read(uint8_t ANC)
+{
+    if(ANC<0 || ANC>7)    // Check Channel Number Validity
+    { return 0;}
+    ADCON0 &= 0b11000101; // Clear The Channel Selection Bits
+    ADCON0 |= ANC<<3;     // Select The Required Channel (ANC)
+                          // Wait The Aquisition Time
+    __delay_us(30);       // The Minimum Tacq = 20us, So That should be enough
+    GO_DONE = 1;          // Start A/D Conversion
+    while(ADCON0bits.GO_DONE); // Polling GO_DONE Bit
+                               // Provides Delay Until Conversion Is Complete
+    return ((ADRESH << 8) + ADRESL); // Return The Right-Justified 10-Bit Result
+}
