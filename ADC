@@ -1,39 +1,3 @@
-PIC16F877A ADC LED Dimmer (ADC + PWM)
-
-Project Description
-This project demonstrates how to use the ADC and PWM modules of the PIC16F877A microcontroller to control LED brightness.  
-A potentiometer connected to Analog Channel AN0 is used to vary the input voltage. The ADC converts this voltage into a 10-bit digital value, which is then mapped directly to the PWM duty cycle to control LED brightness.
-
-Objectives
-- Configure the ADC module of PIC16F877A
-- Read analog voltage using AN0
-- Configure PWM using CCP1 module
-- Control LED brightness using PWM based on ADC input
-
-Hardware Components
-- PIC16F877A
-- Potentiometer (POT-HG)
-- LED
-- Oscilloscope
-- VCC and Ground
-
-Software Tools
-- MPLAB X IDE
-- XC8 Compiler
-- Proteus (for simulation)
-
-Working Principle
-1. The ADC reads the analog voltage from the potentiometer connected to AN0.
-2. The ADC produces a 10-bit digital value (0–1023).
-3. This value is passed directly to the PWM module.
-4. PWM duty cycle changes according to the ADC value.
-5. LED brightness increases or decreases based on the duty cycle.
-
-Output
-- Smooth LED brightness control using analog input
-- Real-time response to potentiometer changes
-
-
 #pragma config FOSC = HS        // Oscillator Selection bits (HS oscillator)
 #pragma config WDTE = ON        // Watchdog Timer Enable bit (WDT enabled)
 #pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
