@@ -82,3 +82,13 @@ compare:<img width="941" height="514" alt="image" src="https://github.com/user-a
 ## 10. ADC
 
 <img width="1028" height="560" alt="image" src="https://github.com/user-attachments/assets/0472f756-3c14-4838-b618-f1222ba4d38c" />
+
+
+## 11. UART Communication
+Displaying message on LCD screen with respect to each switch pressed.
+
+<img width="1324" height="598" alt="Screenshot 2026-01-13 124729" src="https://github.com/user-attachments/assets/2bc104ad-04e4-4c12-9ff7-ea20f46f9580" />
+
+## 12. Basic Calculator
+
+
