@@ -1,1 +1,133 @@
+Transmitter Code:
+
+#define _XTAL_FREQ 16000000
+
+#pragma config FOSC = HS
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config BOREN = OFF
+#pragma config LVP = OFF
+#pragma config CPD = OFF
+#pragma config WRT = OFF
+#pragma config CP = OFF
+#include <xc.h>
+#define _XTAL_FREQ 16000000
+
+#pragma config FOSC = HS, WDTE = OFF, PWRTE = ON, LVP = OFF
+
+#define SW1 RB0
+#define SW2 RB1
+#define VALID RC0
+
+void main(void)
+{
+    ADCON1 = 0x06;      // ? IMPORTANT
+    TRISB = 0xFF;       // Switches
+    TRISD = 0x00;       // Data bus
+    TRISC0 = 0;         // VALID output
+
+    OPTION_REGbits.nRBPU = 0; // Enable PORTB pull-ups
+
+    PORTD = 0;
+    VALID = 0;
+
+    while(1)
+    {
+        if(SW1 == 0)   // ACTIVE LOW
+        {
+            PORTD = 0x01;
+            VALID = 1;
+            __delay_ms(200);
+            VALID = 0;
+            while(SW1 == 0); // wait release
+        }
+
+        if(SW2 == 0)   // ACTIVE LOW
+        {
+            PORTD = 0x02;
+            VALID = 1;
+            __delay_ms(200);
+            VALID = 0;
+            while(SW2 == 0);
+        }
+    }
+}
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+RECEIVER CODE:
+
+#define _XTAL_FREQ 16000000
+
+#pragma config FOSC = HS
+#pragma config WDTE = OFF
+#pragma config PWRTE = ON
+#pragma config BOREN = OFF
+#pragma config LVP = OFF
+#pragma config CPD = OFF
+#pragma config WRT = OFF
+#pragma config CP = OFF
+#include <xc.h>
+
+#define _XTAL_FREQ 16000000
+
+#define RS RB2
+#define EN RB3
+
+void lcd_cmd(unsigned char cmd)
+{
+    PORTB = (PORTB & 0x0F) | (cmd & 0xF0);
+    RS = 0; EN = 1; __delay_ms(2); EN = 0;
+    PORTB = (PORTB & 0x0F) | (cmd << 4);
+    EN = 1; __delay_ms(2); EN = 0;
+}
+
+void lcd_data(unsigned char data)
+{
+    PORTB = (PORTB & 0x0F) | (data & 0xF0);
+    RS = 1; EN = 1; __delay_ms(2); EN = 0;
+    PORTB = (PORTB & 0x0F) | (data << 4);
+    EN = 1; __delay_ms(2); EN = 0;
+}
+
+void lcd_init()
+{
+    lcd_cmd(0x02);
+    lcd_cmd(0x28);
+    lcd_cmd(0x0C);
+    lcd_cmd(0x06);
+    lcd_cmd(0x01);
+}
+
+void lcd_print(const char *str)
+{
+    while(*str)
+        lcd_data(*str++);
+}
+void main(void)
+{
+    ADCON1 = 0x06;   // ? FIRST LINE
+    TRISD = 0xFF;    // Data in
+    TRISC0 = 1;      // VALID in
+    TRISB = 0x00;    // LCD
+
+    lcd_init();      // AFTER ADCON1
+
+    while(1)
+    {
+        if(RC0 == 1)
+        {
+            unsigned char data = PORTD;
+            lcd_cmd(0x01);
+
+            if(data == 0x01)
+                lcd_print("Hi");
+            else if(data == 0x02)
+                lcd_print("Hello");
+
+            while(RC0 == 1);
+        }
+    }
+}
 
