@@ -91,4 +91,5 @@ Displaying message on LCD screen with respect to each switch pressed.
 
 ## 12. Basic Calculator
 
+<img width="901" height="694" alt="Screenshot 2026-01-15 120901" src="https://github.com/user-attachments/assets/ddc0b5e4-db66-457d-b6eb-1e9b14707ddb" />
 
