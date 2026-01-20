@@ -1,0 +1,168 @@
+TRANSMITTER
+
+#pragma config FOSC = HS        // Oscillator Selection bits (HS oscillator)
+#pragma config WDTE = ON        // Watchdog Timer Enable bit (WDT enabled)
+#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
+#pragma config BOREN = ON       // Brown-out Reset Enable bit (BOR enabled)
+#pragma config LVP = ON         // Low-Voltage (Single-Supply) In-Circuit Serial Programming Enable bit (RB3/PGM pin has PGM function; low-voltage programming enabled)
+#pragma config CPD = OFF        // Data EEPROM Memory Code Protection bit (Data EEPROM code protection off)
+#pragma config WRT = OFF        // Flash Program Memory Write Enable bits (Write protection off; all program memory may be written to by EECON control)
+#pragma config CP = OFF         // Flash Program Memory Code Protection bit (Code protection off)
+
+// #pragma config statements should precede project file includes.
+// Use project enums instead of #define for ON and OFF.
+
+#include <xc.h>
+#define _XTAL_FREQ 16000000 // Fosc
+#define I2C_BaudRate 100000 // I2C Baud Rate = 100 Kbps
+//----------------------------------------------------------
+//-----------------[ Functions' Prototypes ]----------------
+void I2C_Master_Init(void);
+void I2C_Wait(void);
+void I2C_Start(void);
+void I2C_Stop(void);
+void I2C_Restart(void);
+void I2C_ACK(void);
+void I2C_NACK(void);
+unsigned char I2C_Write(unsigned char Data);
+//----------------------------------------------------------
+void main()
+{
+  TRISB = 0xFF;
+  TRISD = 0x00;
+  PORTD = 0x00;
+  unsigned char i=1;
+  I2C_Master_Init();
+  while(1)
+  {
+    I2C_Start(); // I2C Start Sequence
+    I2C_Write(0x40); // I2C Slave Device Address + Write
+    I2C_Write(i++); // The Data To Be Sent
+    I2C_Stop(); // I2C Stop Sequence
+    __delay_ms(500);
+    RD3 = ~RD3; // Toggle LED Each Time A Byte Is Sent!
+  }
+}
+//------------[ END OF MAIN ]--------------
+//-----------------------------------------
+void I2C_Master_Init()
+{
+  SSPCON = 0x28;
+  SSPCON2 = 0x00;
+  SSPSTAT = 0x00;
+  SSPADD = ((_XTAL_FREQ/4)/I2C_BaudRate) - 1;
+  TRISC3 = 1;
+  TRISC4 = 1;
+}
+void I2C_Wait()
+{
+  while ((SSPSTAT & 0x04) || (SSPCON2 & 0x1F));
+}
+void I2C_Start()
+{
+  //---[ Initiate I2C Start Condition Sequence ]---
+  I2C_Wait();
+  SEN = 1;
+}
+void I2C_Stop()
+{
+  //---[ Initiate I2C Stop Condition Sequence ]---
+  I2C_Wait();
+  PEN = 1;
+}
+void I2C_Restart()
+{
+  //---[ Initiate I2C Restart Condition Sequence ]---
+  I2C_Wait();
+  RSEN = 1;
+}
+void I2C_ACK(void)
+{
+  //---[ Send ACK - For Master Receiver Mode ]---
+  I2C_Wait();
+  ACKDT = 0; // 0 -> ACK, 1 -> NACK
+  ACKEN = 1; // Send ACK Signal!
+}
+void I2C_NACK(void)
+{
+  //---[ Send NACK - For Master Receiver Mode ]---
+  I2C_Wait();
+  ACKDT = 1; // 1 -> NACK, 0 -> ACK
+  ACKEN = 1; // Send NACK Signal!
+}
+unsigned char I2C_Write(unsigned char Data)
+{
+  //---[ Send Byte, Return The ACK/NACK ]---
+  I2C_Wait();
+  SSPBUF = Data;
+  I2C_Wait();
+  return ACKSTAT;
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+RECEIVER
+
+#pragma config FOSC = HS        // Oscillator Selection bits (HS oscillator)
+#pragma config WDTE = ON        // Watchdog Timer Enable bit (WDT enabled)
+#pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
+#pragma config BOREN = ON       // Brown-out Reset Enable bit (BOR enabled)
+#pragma config LVP = ON         // Low-Voltage (Single-Supply) In-Circuit Serial Programming Enable bit (RB3/PGM pin has PGM function; low-voltage programming enabled)
+#pragma config CPD = OFF        // Data EEPROM Memory Code Protection bit (Data EEPROM code protection off)
+#pragma config WRT = OFF        // Flash Program Memory Write Enable bits (Write protection off; all program memory may be written to by EECON control)
+#pragma config CP = OFF         // Flash Program Memory Code Protection bit (Code protection off)
+
+// #pragma config statements should precede project file includes.
+// Use project enums instead of #define for ON and OFF.
+
+#include <xc.h>
+#define _XTAL_FREQ 16000000 // Fosc
+unsigned char RX_Data = 0x00;
+//-----------[ Functions' Prototypes ]--------------
+void I2C_Slave_Init(unsigned char);
+//==================================================
+void main(void)
+{
+  TRISD = 0x00;
+  PORTD = 0x00;
+  I2C_Slave_Init(0x40); // Initiate I2C Slave With Address = 64 or 0x40
+  while(1)
+  {
+ 
+  }
+  return;
+}
+//----------------[ END OF MAIN ]-------------------
+//==================================================
+void __interrupt() ISR(void)
+{
+  if(SSPIF)
+  {
+    if(!R_nW) // Slave Write (Receive)
+    {
+      char Dummy = SSPBUF; // Dummy Read
+      CKP = 1; // Release The SCL Clock Line
+      while(!BF); // Wait Until Completion
+      RX_Data = SSPBUF; // Read The Buffer Data
+      PORTD = RX_Data;  // Output The Received Byte
+    }
+  CKP = 1;   // Release The SCL Clock Line
+  SSPIF = 0; // Clear The Interrupt Flag
+  }
+}
+//---------------[ I2C Routines ]-------------------
+void I2C_Slave_Init(unsigned char Address)
+{
+  //---[ Configures The I2C In Slave Mode]---
+  SSPADD = Address; // Set The I2C Slave Device Address
+  SSPSTAT = 0x80;
+  SSPCON = 0x36;
+  SSPCON2 = 0x01;
+  TRISC3 = 1; // SCL Set To Input
+  TRISC4 = 1; // SDA Set To Input
+  GIE = 1;    // Enable Interrupts
+  PEIE = 1;
+  SSPIF = 0;
+  SSPIE = 1;
+}
+
+
