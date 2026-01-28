@@ -121,6 +121,7 @@ It specifies data format, timing, synchronization, and direction of data flow.
 - Two-wire communication
 - Uses SDA (data) and SCL (clock)
 - Address-based communication
+- Multi master
 
 **Communication Mode:** Half Duplex  
 
