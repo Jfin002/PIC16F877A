@@ -88,6 +88,7 @@ It specifies data format, timing, synchronization, and direction of data flow.
 ### 1. UART / USART
 - Asynchronous serial communication
 - Uses TX and RX lines
+- Point to point communication
 
 **Communication Mode:** Full Duplex  
 
@@ -118,10 +119,9 @@ It specifies data format, timing, synchronization, and direction of data flow.
 ---
 
 ### 3. I²C (Inter-Integrated Circuit)
-- Two-wire communication
 - Uses SDA (data) and SCL (clock)
 - Address-based communication
-- Multi master
+- Multi master Multi slave
 
 **Communication Mode:** Half Duplex  
 
