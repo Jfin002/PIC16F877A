@@ -133,7 +133,10 @@ It specifies data format, timing, synchronization, and direction of data flow.
 <img width="551" height="194" alt="peri_api_i2c_diagram" src="https://github.com/user-attachments/assets/4575e91e-6011-4409-b773-9e49f0d82730" />
 
 ---
+## UART, SPI, I2C
+<img width="800" height="1000" alt="image" src="https://github.com/user-attachments/assets/4240645e-ece0-4061-80f2-181c08fd0bf0" />
 
+---
 ### 4. CAN (Controller Area Network)
 - Multi-master communication
 - High reliability and error detection
